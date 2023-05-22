@@ -1,5 +1,7 @@
 import tkinter
-from typing import Any
+from typing import Any, List
+
+from PIL import ImageTk, Image
 
 ROOT_WINDOW_SIZE = "1280x720"
 
@@ -30,9 +32,42 @@ def regex_input(root_window: tkinter.Tk) -> str:
     return regex_input_var.get()
 
 
+def image_viewer(root_window: tkinter.Tk, images: List[str]) -> None:
+    images = [ImageTk.PhotoImage(Image.open(img)) for img in images]
+
+    image_index = 0
+
+    def _next() -> None:
+        nonlocal image_index
+        image_index = image_index + 1
+        try:
+            image_label.config(image=images[image_index])
+        except Exception:
+            image_index = -1
+            _next()
+
+    def back() -> None:
+        nonlocal image_index
+        image_index = image_index - 1
+        try:
+            image_label.config(image=images[image_index])
+        except Exception:
+            image_index = 0
+            back()
+
+    tkinter.Button(root_window, text='Back', command=back).pack(side=tkinter.LEFT)
+    tkinter.Button(root_window, text='Next', command=_next).pack(side=tkinter.RIGHT)
+
+    image_label = tkinter.Label(root_window, image=images[image_index])
+
+    image_label.pack(pady=150)
+
+
 if __name__ == '__main__':
     root_window: tkinter.Tk = init_window()
 
     regex = regex_input(root_window=root_window)
 
+    image_viewer(root_window=root_window, images=[
+                 '/home/younes/Pictures/Wallpapers/LKarBS.png', '/home/younes/Pictures/Wallpapers/17.jpg'])
     root_window.mainloop()
