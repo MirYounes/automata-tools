@@ -3,6 +3,8 @@ from typing import Any, List
 
 from PIL import ImageTk, Image
 
+from regex_to_postfix import regex_to_postfix
+
 ROOT_WINDOW_SIZE = "1280x720"
 
 
@@ -67,7 +69,8 @@ if __name__ == '__main__':
     root_window: tkinter.Tk = init_window()
 
     regex = regex_input(root_window=root_window)
+    postfix_regex = regex_to_postfix(regex=regex)
 
-    image_viewer(root_window=root_window, images=[
-                 '/home/younes/Pictures/Wallpapers/LKarBS.png', '/home/younes/Pictures/Wallpapers/17.jpg'])
+    print(postfix_regex)
+    # image_viewer(root_window=root_window, images=['nfa.png'])
     root_window.mainloop()
