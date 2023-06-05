@@ -1,14 +1,51 @@
 import uuid
-from typing import List, Dict
+import pprint
+from typing import List, Dict, Set
 
 from schemas import Symbols
 
 
 class Nfa:
-    states: List[uuid.UUID]
+    states: Set[uuid.UUID]
     initial_state: uuid.UUID
-    final_states: List[uuid.UUID]
-    transactions: Dict[uuid.UUID, Dict[str, List[uuid.UUID]]]
+    final_states: Set[uuid.UUID]
+    transactions: Dict[uuid.UUID, Dict[str, Set[uuid.UUID]]]
+    alphabets: Set[str]
+
+    def __init__(
+        self,
+        states: Set[uuid.UUID],
+        initial_state: uuid.UUID,
+        final_states: Set[uuid.UUID],
+        transactions: Dict[uuid.UUID, Dict[str, Set[uuid.UUID]]],
+        alphabets: Set[str]
+    ) -> None:
+        self.states = states
+        self.initial_state = initial_state
+        self.final_states = final_states
+        self.transactions = transactions
+        self.alphabets = alphabets
+
+    @classmethod
+    def init_nfa(cls, character: str) -> 'Nfa':
+        initial_state = uuid.uuid4()
+        final_state = uuid.uuid4()
+        return cls(
+            initial_state=initial_state,
+            final_states={final_state},
+            states={initial_state, final_state},
+            transactions={initial_state: {character: {final_state}}},
+            alphabets={character}
+        )
+
+    def __repr__(self) -> str:
+        return pprint.pformat({
+            "alphabets": self.alphabets,
+            "states": self.states,
+            "initial_state": self.initial_state,
+            "final_states": self.final_states,
+            "transactions": self.transactions
+        })
 
     @staticmethod
     def add_concat_symbol(regex: str) -> str:
