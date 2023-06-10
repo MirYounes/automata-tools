@@ -3,6 +3,9 @@ import pprint
 from typing import List, Dict, Set
 
 from schemas import Symbols
+from utils import merge_dict
+
+from graphviz import Digraph
 
 
 class Nfa:
@@ -66,6 +69,87 @@ class Nfa:
         self.final_states = new_final_states
         self.transactions = new_transactions
 
+    def kleene_star(self) -> None:
+        if len(self.final_states) > 1:
+            new_final_state = str(uuid.uuid4())
+            old_final_states = self.final_states
+            self.final_states = {new_final_state}
+            self.states.add(new_final_state)
+            for state in old_final_states:
+                if state not in self.transactions:
+                    self.transactions[state] = dict()
+                state_epsilon_transactions: Set[str] = self.transactions[state].get(Symbols.EPSILON, set())
+                state_epsilon_transactions.add(new_final_state)
+                self.transactions[state][Symbols.EPSILON] = state_epsilon_transactions
+
+        final_state = list(self.final_states)[0]
+        if self.initial_state not in self.transactions:
+            self.transactions[self.initial_state] = dict()
+        initial_state_epsilon_transactions: Set[str] = self.transactions[self.initial_state].get(Symbols.EPSILON, set())
+        initial_state_epsilon_transactions.add(final_state)
+        self.transactions[self.initial_state][Symbols.EPSILON] = initial_state_epsilon_transactions
+
+        if final_state not in self.transactions:
+            self.transactions[final_state] = dict()
+        final_state_epsilon_transactions: Set[str] = self.transactions[final_state].get(Symbols.EPSILON, set())
+        final_state_epsilon_transactions.add(self.initial_state)
+        self.transactions[final_state][Symbols.EPSILON] = final_state_epsilon_transactions
+
+    def kleene_one(self) -> None:
+        if len(self.final_states) > 1:
+            new_final_state = str(uuid.uuid4())
+            old_final_states = self.final_states
+            self.final_states = {new_final_state}
+            self.states.add(new_final_state)
+            for state in old_final_states:
+                if state not in self.transactions:
+                    self.transactions[state] = dict()
+                state_epsilon_transactions: Set[str] = self.transactions[state].get(Symbols.EPSILON, set())
+                state_epsilon_transactions.add(new_final_state)
+                self.transactions[state][Symbols.EPSILON] = state_epsilon_transactions
+
+        final_state = list(self.final_states)[0]
+        if self.initial_state not in self.transactions:
+            self.transactions[self.initial_state] = dict()
+        initial_state_epsilon_transactions: Set[str] = self.transactions[self.initial_state].get(Symbols.EPSILON, set())
+        initial_state_epsilon_transactions.add(final_state)
+        self.transactions[self.initial_state][Symbols.EPSILON] = initial_state_epsilon_transactions
+
+    def kleene_plus(self) -> None:
+        if len(self.final_states) > 1:
+            new_final_state = str(uuid.uuid4())
+            old_final_states = self.final_states
+            self.final_states = {new_final_state}
+            self.states.add(new_final_state)
+            for state in old_final_states:
+                if state not in self.transactions:
+                    self.transactions[state] = dict()
+                state_epsilon_transactions: Set[str] = self.transactions[state].get(Symbols.EPSILON, set())
+                state_epsilon_transactions.add(new_final_state)
+                self.transactions[state][Symbols.EPSILON] = state_epsilon_transactions
+
+        final_state = list(self.final_states)[0]
+        if final_state not in self.transactions:
+            self.transactions[final_state] = dict()
+        final_state_epsilon_transactions: Set[str] = self.transactions[final_state].get(Symbols.EPSILON, set())
+        final_state_epsilon_transactions.add(self.initial_state)
+        self.transactions[final_state][Symbols.EPSILON] = final_state_epsilon_transactions
+
+    @classmethod
+    def union(cls, nfa1: 'Nfa', nfa2: 'Nfa') -> 'Nfa':
+        states = nfa1.states.union(nfa2.states)
+        initial_state = str(uuid.uuid4())
+        states.add(initial_state)
+        nfa = cls(
+            initial_state=initial_state,
+            states=states,
+            final_states=nfa1.final_states.union(nfa2.final_states),
+            alphabets=nfa1.alphabets.union(nfa2.alphabets),
+            transactions=merge_dict(nfa1.transactions, nfa2.transactions)
+        )
+        nfa.transactions[nfa.initial_state] = {Symbols.EPSILON: {nfa1.initial_state, nfa2.initial_state}}
+        return nfa
+
     @classmethod
     def init_nfa(cls, character: str) -> 'Nfa':
         initial_state = str(uuid.uuid4())
@@ -79,7 +163,7 @@ class Nfa:
         )
 
     @classmethod
-    def concat_nfa(cls, nfa1: 'Nfa', nfa2: 'Nfa') -> 'Nfa':
+    def concat(cls, nfa1: 'Nfa', nfa2: 'Nfa') -> 'Nfa':
         merge = False
         if len(nfa1.final_states) == 1:
             nfa1_final_state = list(nfa1.final_states)[0]
@@ -163,6 +247,80 @@ class Nfa:
             postfix_regex += operator_stack.pop()
 
         return postfix_regex
+
+    @classmethod
+    def regex_to_nfa(cls, regex: str) -> 'Nfa':
+        postfix_exp = cls.regex_to_postfix(regex=regex)
+
+        nfa_stack: List[Nfa] = []
+        for character in postfix_exp:
+            if Symbols.is_alphabet(character):
+                nfa_stack.append(cls.init_nfa(character=character))
+            elif character == Symbols.CONCAT:
+                nfa2 = nfa_stack.pop()
+                nfa1 = nfa_stack.pop()
+                nfa_stack.append(cls.concat(nfa1=nfa1, nfa2=nfa2))
+            elif character == Symbols.UNION:
+                nfa2 = nfa_stack.pop()
+                nfa1 = nfa_stack.pop()
+                nfa_stack.append(cls.union(nfa1=nfa1, nfa2=nfa2))
+            elif character == Symbols.ZERO_OR_MORE:
+                nfa = nfa_stack.pop()
+                nfa.kleene_star()
+                nfa_stack.append(nfa)
+            elif character == Symbols.ZERO_OR_ONE:
+                nfa = nfa_stack.pop()
+                nfa.kleene_one()
+                nfa_stack.append(nfa)
+            elif character == Symbols.ONE_OR_MORE:
+                nfa = nfa_stack.pop()
+                nfa.kleene_plus()
+                nfa_stack.append(nfa)
+        nfa = nfa_stack.pop()
+        return nfa
+
+    def draw(self, directory: str) -> List[str]:
+        images: List[str] = []
+        graph = Digraph(format='png')
+        graph.attr(rankdir='LR')
+
+        # add an initial edge
+        graph.node(name='', shape='none')
+        graph.node(name=self.initial_state, shape='circle')
+        graph.edge("", self.initial_state)
+
+        drawed_states: Set[str] = {self.initial_state}
+        state_stack: List[str] = [self.initial_state]
+        step = 1
+        while state_stack:
+            new_state_stack: List[str] = []
+            is_changed = False
+
+            while state_stack:
+                state = state_stack.pop(0)
+                state_transactions = self.transactions.get(state)
+                if not state_transactions:
+                    continue
+                for alphabet, alphabet_transactions in state_transactions.items():
+                    for destination_state in alphabet_transactions:
+                        if destination_state not in drawed_states:
+                            state_shape = 'doublecircle' if destination_state in self.final_states else 'circle'
+                            graph.node(name=destination_state, shape=state_shape)
+                            new_state_stack.append(destination_state)
+                            drawed_states.add(destination_state)
+                        graph.edge(tail_name=state, head_name=destination_state,
+                                   label=Symbols.EPSILON_UNICODE if alphabet == Symbols.EPSILON else alphabet)
+                        is_changed = True
+
+            if is_changed:
+                label = f"nfa_step_{step}"
+                graph.attr(label=label, fontsize='30')
+                image = graph.render(filename=label, directory=directory)
+                images.append(image)
+                step += 1
+            state_stack = new_state_stack
+
+        return images
 
     @staticmethod
     def add_concat_symbol(regex: str) -> str:

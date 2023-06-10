@@ -15,7 +15,10 @@ class Symbols:
 
     OPEN_PARENTHESIS = '('
     CLOSE_PARENTHESIS = ')'
+    EPSILON = '$'
+    STATE_NAME_PREFIX = 'Q'
+    EPSILON_UNICODE = "\u03B5"
 
     @classmethod
     def is_alphabet(cls, char: str) -> bool:
-        return char not in cls.PRIORITIES and char not in [cls.OPEN_PARENTHESIS, cls.CLOSE_PARENTHESIS]
+        return char not in cls.PRIORITIES and char not in (cls.OPEN_PARENTHESIS, cls.CLOSE_PARENTHESIS)
