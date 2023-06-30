@@ -17,7 +17,17 @@ class Symbols:
     CLOSE_PARENTHESIS = ')'
     EPSILON = '$'
     STATE_NAME_PREFIX = 'Q'
-    EPSILON_UNICODE = "\u03B5"
+
+    NFA_TYPE = 'nfa'
+    DFA_TYPE = 'dfa'
+    FA_TYPE = 'fa'
+
+    TRAP_STATE = 'T'
+
+    INITIAL_STATE_COLOR = '#48cae4'
+    FINAL_STATE_COLOR = 'green'
+    TRAP_STATE_COLOR = 'red'
+    MIDDLE_STATE_COLOR = '#fafa00'
 
     @classmethod
     def is_alphabet(cls, char: str) -> bool:
