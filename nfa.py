@@ -41,28 +41,45 @@ class Nfa:
     def normalize(self) -> None:
         states_table: Dict[str, str] = {}
 
-        state_counter = 1
         new_states: Set[str] = set()
         new_final_states: Set[str] = set()
         new_initial_state: str = ''
-        for state in self.states:
-            new_state = f"{Symbols.STATE_NAME_PREFIX}{state_counter}"
-            states_table[state] = new_state
+        new_transactions: Dict[str, Dict[str, Set[str]]] = {}
+
+        state_counter = 1
+        stack: List[str] = [self.initial_state]
+        while stack:
+            state = stack.pop()
+
+            new_state = states_table.get(state)
+            if not new_state:
+                new_state = f"{Symbols.STATE_NAME_PREFIX}{state_counter}"
+                states_table[state] = new_state
+                state_counter += 1
+
+            new_state_transactions: Dict[str, Set[str]] = {}
+            for alphabet in self.transactions.get(state, {}).keys():
+                new_state_transactions[alphabet] = set()
+
+                for destination_state in self.transactions[state][alphabet]:
+                    new_destination_state = states_table.get(destination_state)
+
+                    if not new_destination_state:
+                        new_destination_state = f"{Symbols.STATE_NAME_PREFIX}{state_counter}"
+                        states_table[destination_state] = new_destination_state
+                        state_counter += 1
+                        stack.append(destination_state)
+
+                    new_state_transactions[alphabet].add(new_destination_state)
+
             new_states.add(new_state)
             if state == self.initial_state:
                 new_initial_state = new_state
-            if state in self.final_states:
+            elif state in self.final_states:
                 new_final_states.add(new_state)
-            state_counter += 1
 
-        new_transactions: Dict[str, Dict[str, Set[str]]] = {}
-        for state in self.transactions.keys():
-            new_state = states_table[state]
-            new_transactions[new_state] = {}
-            for alphabet in self.transactions[state].keys():
-                new_transactions[new_state][alphabet] = set()
-                for transactions_state in self.transactions[state][alphabet]:
-                    new_transactions[new_state][alphabet].add(states_table[transactions_state])
+            if new_state_transactions:
+                new_transactions[new_state] = new_state_transactions
 
         self.states = new_states
         self.initial_state = new_initial_state
