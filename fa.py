@@ -40,7 +40,7 @@ class Fa:
 
         # add an initial edge
         graph.node(name='', shape='none')
-        graph.node(name=self.initial_state, shape='circle')
+        graph.node(name=self.initial_state, shape='circle', style='filled', color=Symbols.INITIAL_STATE_COLOR)
         graph.edge("", self.initial_state)
 
         drawed_states: Set[str] = {self.initial_state}
@@ -53,18 +53,37 @@ class Fa:
             while state_stack:
                 state = state_stack.pop(0)
                 state_transactions = self.transactions.get(state)
+                state_transactions_reverse: Dict[str, Set[str]] = dict()
+
                 if not state_transactions:
                     continue
+
                 for alphabet, alphabet_transactions in state_transactions.items():
+                    alphabet_transactions = alphabet_transactions if self.FA_TYPE == Symbols.NFA_TYPE else {
+                        alphabet_transactions}
                     for destination_state in alphabet_transactions:
+                        destination_state_transaction = state_transactions_reverse.get(destination_state, set())
+                        destination_state_transaction.add(alphabet)
+                        state_transactions_reverse[destination_state] = destination_state_transaction
+
                         if destination_state not in drawed_states:
+                            state_color = Symbols.MIDDLE_STATE_COLOR
+                            if destination_state == self.initial_state:
+                                state_color = Symbols.INITIAL_STATE_COLOR
+                            elif destination_state == Symbols.TRAP_STATE:
+                                state_color = Symbols.TRAP_STATE_COLOR
+                            elif destination_state in self.final_states:
+                                state_color = Symbols.FINAL_STATE_COLOR
+
                             state_shape = 'doublecircle' if destination_state in self.final_states else 'circle'
-                            graph.node(name=destination_state, shape=state_shape)
+                            graph.node(name=destination_state, shape=state_shape, style='filled', color=state_color)
                             new_state_stack.append(destination_state)
                             drawed_states.add(destination_state)
-                        graph.edge(tail_name=state, head_name=destination_state,
-                                   label=Symbols.EPSILON_UNICODE if alphabet == Symbols.EPSILON else alphabet)
-                        is_changed = True
+
+                for destination_state, alphabets in state_transactions_reverse.items():
+                    graph.edge(tail_name=state, head_name=destination_state,
+                               label=",".join(alphabets))
+                    is_changed = True
 
             if is_changed:
                 label = f"{self.FA_TYPE}_step_{step}"

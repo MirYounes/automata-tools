@@ -1,9 +1,11 @@
 import tkinter
 from typing import Any, List
+import tempfile
 
 from PIL import ImageTk, Image
 
 from nfa import Nfa
+from dfa import Dfa
 
 ROOT_WINDOW_SIZE = "1280x720"
 
@@ -69,8 +71,15 @@ if __name__ == '__main__':
     root_window: tkinter.Tk = init_window()
 
     regex = regex_input(root_window=root_window)
-    postfix_regex = Nfa.regex_to_postfix(regex=regex)
 
-    print(postfix_regex)
-    # image_viewer(root_window=root_window, images=['nfa.png'])
+    with tempfile.TemporaryDirectory() as temp_directory:
+        nfa = Nfa.regex_to_nfa(regex=regex)
+        nfa.normalize()
+        nfa_images = nfa.draw(directory=temp_directory)
+
+        dfa = Dfa.nfa_to_dfa(nfa=nfa)
+        dfa_images = dfa.draw(directory=temp_directory)
+
+        images = nfa_images + dfa_images
+        image_viewer(root_window=root_window, images=images)
     root_window.mainloop()
