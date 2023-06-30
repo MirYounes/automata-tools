@@ -1,6 +1,6 @@
 import uuid
 import pprint
-from typing import List, Dict, Set
+from typing import List, Dict, Set, Optional
 
 from schemas import Symbols
 from utils import merge_dict
@@ -336,3 +336,23 @@ class Nfa:
                     new_regex += Symbols.CONCAT
             new_regex += current_char
         return new_regex
+
+    @staticmethod
+    def get_epsilon_closure(nfa: 'Nfa', state: str) -> Set[str]:
+        result: Set[str] = set()
+        stack: List[str] = [state]
+
+        while stack:
+            current_state: str = stack.pop()
+
+            result.add(current_state)
+
+            current_state_epsilon_transactions: Optional[Set[str]] = nfa.transactions.get(
+                current_state, {}).get(Symbols.EPSILON, None)
+
+            if current_state_epsilon_transactions:
+                for state in current_state_epsilon_transactions:
+                    if state not in result:
+                        stack.append(state)
+
+        return result
