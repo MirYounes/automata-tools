@@ -1,6 +1,6 @@
 import uuid
 import pprint
-from typing import List, Dict, Set, Union
+from typing import List, Dict, Set, Union, Tuple
 
 from schemas import Symbols
 
@@ -33,15 +33,18 @@ class Fa:
             "transactions": self.transactions
         })
 
-    def draw(self, directory: str) -> List[str]:
+    def draw(self, directory: str, title: str = '') -> List[str]:
+        title = title or self.FA_TYPE
+
         images: List[str] = []
         graph = Digraph(format='png')
         graph.attr(rankdir='LR')
 
         # add an initial edge
+        initial_state_name = self.get_state_name(state=self.initial_state)
         graph.node(name='', shape='none')
-        graph.node(name=self.initial_state, shape='circle', style='filled', color=Symbols.INITIAL_STATE_COLOR)
-        graph.edge("", self.initial_state)
+        graph.node(name=initial_state_name, shape='circle', style='filled', color=Symbols.INITIAL_STATE_COLOR)
+        graph.edge("", initial_state_name)
 
         drawed_states: Set[str] = {self.initial_state}
         state_stack: List[str] = [self.initial_state]
@@ -54,6 +57,7 @@ class Fa:
                 state = state_stack.pop(0)
                 state_transactions = self.transactions.get(state)
                 state_transactions_reverse: Dict[str, Set[str]] = dict()
+                state_name = self.get_state_name(state=state)
 
                 if not state_transactions:
                     continue
@@ -70,23 +74,24 @@ class Fa:
                             state_color = Symbols.MIDDLE_STATE_COLOR
                             if destination_state == self.initial_state:
                                 state_color = Symbols.INITIAL_STATE_COLOR
-                            elif destination_state == Symbols.TRAP_STATE:
+                            elif (destination_state == Symbols.TRAP_STATE) or (Symbols.TRAP_STATE in destination_state):
                                 state_color = Symbols.TRAP_STATE_COLOR
                             elif destination_state in self.final_states:
                                 state_color = Symbols.FINAL_STATE_COLOR
 
                             state_shape = 'doublecircle' if destination_state in self.final_states else 'circle'
-                            graph.node(name=destination_state, shape=state_shape, style='filled', color=state_color)
+                            graph.node(name=self.get_state_name(state=destination_state), shape=state_shape,
+                                       style='filled', color=state_color)
                             new_state_stack.append(destination_state)
                             drawed_states.add(destination_state)
 
                 for destination_state, alphabets in state_transactions_reverse.items():
-                    graph.edge(tail_name=state, head_name=destination_state,
+                    graph.edge(tail_name=state_name, head_name=self.get_state_name(state=destination_state),
                                label=",".join(alphabets))
                     is_changed = True
 
             if is_changed:
-                label = f"{self.FA_TYPE}_step_{step}"
+                label = f"{title}_step_{step}"
                 graph.attr(label=label, fontsize='30')
                 image = graph.render(filename=label, directory=directory)
                 images.append(image)
@@ -94,3 +99,7 @@ class Fa:
             state_stack = new_state_stack
 
         return images
+
+    @staticmethod
+    def get_state_name(state: Union[str, Tuple[str, ...]]) -> str:
+        return state if isinstance(state, str) else ",".join(state)

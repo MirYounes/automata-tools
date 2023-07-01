@@ -80,6 +80,10 @@ if __name__ == '__main__':
         dfa = Dfa.nfa_to_dfa(nfa=nfa)
         dfa_images = dfa.draw(directory=temp_directory)
 
-        images = nfa_images + dfa_images
+        min_dfa = Dfa.minimize_dfa(dfa=dfa)
+        min_dfa_images = min_dfa.draw(directory=temp_directory, title="min_dfa")
+
+        images = nfa_images + dfa_images + min_dfa_images
         image_viewer(root_window=root_window, images=images)
+
     root_window.mainloop()
