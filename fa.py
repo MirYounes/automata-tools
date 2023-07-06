@@ -42,8 +42,12 @@ class Fa:
 
         # add an initial edge
         initial_state_name = self.get_state_name(state=self.initial_state)
+        initial_state_shape = 'doublecircle' if self.initial_state in self.final_states else 'circle'
+        initial_state_color = (Symbols.FINAL_STATE_COLOR
+                               if self.initial_state in self.final_states
+                               else Symbols.INITIAL_STATE_COLOR)
         graph.node(name='', shape='none')
-        graph.node(name=initial_state_name, shape='circle', style='filled', color=Symbols.INITIAL_STATE_COLOR)
+        graph.node(name=initial_state_name, shape=initial_state_shape, style='filled', color=initial_state_color)
         graph.edge("", initial_state_name)
 
         drawed_states: Set[str] = {self.initial_state}

@@ -19,6 +19,7 @@ class Dfa(Fa):
     @classmethod
     def nfa_to_dfa(cls, nfa: Nfa) -> 'Dfa':
         initial_state: Tuple[str, ...] = tuple(Nfa.get_epsilon_closure(nfa=nfa, state=nfa.initial_state))
+
         alphabets: Set[str] = nfa.alphabets.copy()
         alphabets.remove(Symbols.EPSILON)
 
@@ -67,14 +68,14 @@ class Dfa(Fa):
                 dfa.states.add(state_name)
                 if any(set(current_tuple_states) & nfa.final_states):
                     dfa.final_states.add(state_name)
-                elif current_tuple_states == initial_state:
+                if current_tuple_states == initial_state:
                     dfa.initial_state = state_name
             dfa.transactions[state_name] = current_tuple_states_transactions
 
         return dfa
 
     @property
-    def reachable_states(self) -> Tuple[Dict[str, int], Dict[int, str], List[str]]:
+    def reachable_states(self) -> Tuple[Dict[str, int], Dict[int, str], List[str]]:        
         reachable_states: Dict[str, int] = dict()
         reachable_states_reverse: Dict[int, str] = dict()
         final_reachable_states: List[str] = []
