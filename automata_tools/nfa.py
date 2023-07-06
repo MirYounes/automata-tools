@@ -85,9 +85,16 @@ class Nfa(Fa):
 
         if final_state not in self.transactions:
             self.transactions[final_state] = dict()
-        final_state_epsilon_transactions: Set[str] = self.transactions[final_state].get(Symbols.EPSILON, set())
-        final_state_epsilon_transactions.add(self.initial_state)
-        self.transactions[final_state][Symbols.EPSILON] = final_state_epsilon_transactions
+
+        if len(self.states) == 2:
+            alphabet = list(self.alphabets - {Symbols.EPSILON})[0]
+            final_state_alphabet_transactions: Set[str] = self.transactions[final_state].get(alphabet, set())
+            final_state_alphabet_transactions.add(final_state)
+            self.transactions[final_state][alphabet] = final_state_alphabet_transactions
+        else:
+            final_state_epsilon_transactions: Set[str] = self.transactions[final_state].get(Symbols.EPSILON, set())
+            final_state_epsilon_transactions.add(self.initial_state)
+            self.transactions[final_state][Symbols.EPSILON] = final_state_epsilon_transactions
 
     def kleene_one(self) -> None:
         if len(self.final_states) > 1:
@@ -125,9 +132,16 @@ class Nfa(Fa):
         final_state = list(self.final_states)[0]
         if final_state not in self.transactions:
             self.transactions[final_state] = dict()
-        final_state_epsilon_transactions: Set[str] = self.transactions[final_state].get(Symbols.EPSILON, set())
-        final_state_epsilon_transactions.add(self.initial_state)
-        self.transactions[final_state][Symbols.EPSILON] = final_state_epsilon_transactions
+
+        if len(self.states) == 2:
+            alphabet = list(self.alphabets - {Symbols.EPSILON})[0]
+            final_state_alphabet_transactions: Set[str] = self.transactions[final_state].get(alphabet, set())
+            final_state_alphabet_transactions.add(final_state)
+            self.transactions[final_state][alphabet] = final_state_alphabet_transactions
+        else:
+            final_state_epsilon_transactions: Set[str] = self.transactions[final_state].get(Symbols.EPSILON, set())
+            final_state_epsilon_transactions.add(self.initial_state)
+            self.transactions[final_state][Symbols.EPSILON] = final_state_epsilon_transactions
 
     @classmethod
     def union(cls, nfa1: 'Nfa', nfa2: 'Nfa') -> 'Nfa':
