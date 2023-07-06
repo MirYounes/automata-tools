@@ -1,5 +1,4 @@
 asttokens==2.2.1
-automata-toolkit==1.0.2
 autopep8==2.0.2
 backcall==0.2.0
 bandit==1.7.5
